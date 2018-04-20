@@ -1,16 +1,17 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "time_.h"
 using namespace std;
 
 typedef vector<string> vecs;
 
 class card {
-    virtual void pay(double money) = 0;
+    virtual bool pay(double money) = 0;
     virtual void query() = 0;
     virtual void deposit(double money) = 0;
 };
-
+class campus_card;
 
 class deposit_card : card {
 private:
@@ -21,20 +22,38 @@ private:
     double _money;
     double _overdraft;
 public:
-    virtual void pay(double money) {
-
+    virtual bool pay(double money, string addr) {
+        if (_money + _overdraft < money) return 0;
+        _money -= money;
+        string t = getTime();
+        _recode.push_back(t + " pay " + to_string(money) + " at " + addr);
+        return 1; 
     }
     virtual void query() {
-        
+        cout << "Records are as follows:" << endl; 
+        for (auto iter = _recode.begin(); iter != _recode.end(); ++ iter) {
+            cout << *iter << endl;
+        }
     }
-    virtual void deposit(double money) {
-        
+    virtual void deposit(double money, string from) {
+        _money += money;
+        string t = getTime();
+        _recode.push_back(t + " deposit " + to_string(money) + " from " + from);
     }
-    void to_other_deposit_card(double money, deposit_card card) {
-
+    bool to_other_deposit_card(double money, deposit_card *card) {
+        if (_money + _overdraft < money) return 0;
+        _money -= money;
+        string t = getTime();
+        _recode.push_back(t + " pay " + to_string(money) + " to deposit card " + card->card_id());
+        card->deposit(money, "deposit card " + _card_id);
+        return 1; 
     }
-    void to_campus_card(double money) {
-
+    bool to_campus_card(double money, campus_card * card) {
+        if (_money + _overdraft < money) return 0;
+        _money -= money;
+        string t = getTime();
+        _recode.push_back(t + " pay " + to_string(money) + " to " + card->name() + "'s campus card " );
+        card->deposit(money, "deposit card " + _card_id);
     }
     
     vecs recode() {
@@ -63,13 +82,13 @@ private:
     vector<deposit_card *> _bind;
     double _money;
 public:
-    virtual void pay(double money) {
+    virtual bool pay(double money) {
 
     }
     virtual void query() {
 
     }
-    virtual void deposit(double money) {
+    virtual void deposit(double money, string from) {
 
     }
     void bind(deposit_card * card) {
